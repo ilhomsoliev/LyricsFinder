@@ -11,7 +11,10 @@ import androidx.navigation.NavController
 import com.oliverworks.lyricsfinder.models.Music
 
 @Composable
-fun FavoriteLyricsScreen(navController:NavController,viewModel: FavoriteLyricsViewModel = hiltViewModel()) {
+fun FavoriteLyricsScreen(
+    navController: NavController,
+    viewModel: FavoriteLyricsViewModel = hiltViewModel()
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -32,10 +35,10 @@ fun FavoriteLyricsScreen(navController:NavController,viewModel: FavoriteLyricsVi
         }
     ) {
         val list: State<List<Music>?> = viewModel.lyrics.observeAsState()
-        if(list.value != null) {
-            FavoriteLyricsBodyContent(list = list.value!!) {
+        if (list.value != null) {
+            FavoriteLyricsBodyContent(list = list.value!!, onDelete = {
                 viewModel.deleteMusic(it)
-            }
+            })
         }
     }
 }

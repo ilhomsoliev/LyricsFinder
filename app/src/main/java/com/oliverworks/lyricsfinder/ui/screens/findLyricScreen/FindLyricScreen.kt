@@ -1,17 +1,18 @@
 package com.oliverworks.lyricsfinder.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.oliverworks.lyricsfinder.ui.screens.findLyricScreen.FindLyricScreenViewModel
@@ -29,16 +30,37 @@ fun FindLyricScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
+    val context = LocalContext.current
+    val expanded = remember { mutableStateOf(false) }
+    val menuItems = listOf("Favorites", "Settings", "About")
+    val scaffoldState = rememberScaffoldState()
     Scaffold(
+        scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
                 title = {
                     Text(text = "Lyric Finder")
                 },
                 actions = {
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "")
+                    IconButton(onClick = { expanded.value = true}) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "",tint = Color.White)
+                    }
+                    DropdownMenu(
+                        expanded = expanded.value,
+                        offset = DpOffset((-40).dp, (-40).dp),
+                        onDismissRequest = { expanded.value = false }) {
+                        menuItems.forEach {
+                            DropdownMenuItem(onClick = {
+                                /*Toast.makeText(
+                                    context,
+                                    "You clicked $it menu",
+                                    Toast.LENGTH_LONG
+                                ).show()*/
+                                expanded.value = false
+                            }) {
+                                Text(text = it)
+                            }
+                        }
                     }
                 }
             )
@@ -54,8 +76,8 @@ fun FindLyricScreen(
 
         val lyrics by viewModel.lyrics.observeAsState()
         FindLyricsBodyContent(
-            Modifier.padding(innerPadding),
-            when (lyrics?.status) {
+            modifier = Modifier.padding(innerPadding),
+            lyrics = when (lyrics?.status) {
                 Status.SUCCESS -> {
                     lyrics?.data?.lyrics
                 }
@@ -69,23 +91,20 @@ fun FindLyricScreen(
                     "Some error or there is no such music"
                 }
             } as String,
-            { artistName, songName ->
+            onFindClick = { artistName, songName ->
                 viewModel.setArtistName(artistName)
                 viewModel.setLyricsLoading()
                 viewModel.getLyrics(artistName, songName)
             },
-            {
+            onSaveClick = {
                 if (viewModel.lyrics.value!!.status == Status.SUCCESS) {
                     viewModel.saveLyrics()
                 }else {
                     scope.launch {
-                        snackbarHostState.showSnackbar("Can's save")
-                        /*DefaultSnackbar(snackbarHostState = snackbarHostState) {
-
-                        }*/
+                        snackbarHostState.showSnackbar(message = "Can's save")
                     }
                 }
             })
-        SnackbarHost(hostState = snackbarHostState)
+            SnackbarHost(hostState = snackbarHostState)
     }
 }
